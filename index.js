@@ -95,7 +95,7 @@ app.post('/api/persons', (request, response) => {
 
 app.put('/api/persons/:id', (request, response) => {
     const body = request.body
-    persons.map(person => person.id !== body.id ? person : body)
+    persons = persons.map(person => person.id !== body.id ? person : body)
     response.send(body)
 })
 
