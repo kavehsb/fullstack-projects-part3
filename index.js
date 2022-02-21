@@ -4,6 +4,7 @@ const express = require('express')
 const morgan = require('morgan')
 const cors = require('cors')
 const Person = require('./models/person')
+const person = require('./models/person')
 
 // Start server
 const app = express()
@@ -79,26 +80,35 @@ app.post('/api/persons', (request, response) => {
 })
 
 // Update a persons information via the api
-app.put('/api/persons/:id', (request, response) => {
-    let body = request.body
-    persons = persons.map(person => person.name !== body.name ? person : (body = {
-        id: person.id,
+app.put('/api/persons/:id', (request, response, next) => {
+    const body = request.body
+    
+    const updatedPerson = {
         name: body.name,
-        number: body.number
-    }))
-    console.log(persons)
-    response.send(body)
+        number: body.number,
+    }
+
+    Person
+    .findByIdAndUpdate(request.params.id, updatedPerson, { new: true })
+    .then(person => {
+        response.json(person)
+    })
+    .catch(error => next(error))
 })
 
 // Get info for the phonebook and the time this info was processed
 app.get('/info', (request, response) => {
-    const date = new Date()
-    response.send(
-        `<p>
-            Phonebook has info for ${persons.length} people. 
-            <br/> Date processed: ${date}
-        </p>`
-    )
+    date = new Date()
+    Person
+    .collection.countDocuments()
+    .then(result => {
+        response.send(
+            `<p>
+                Phonebook has info for ${result} people. 
+                <br/> Date processed: ${date}
+            </p>`
+        )
+    })
 })
 
 const unknownEndpoint = (request, response) => {
