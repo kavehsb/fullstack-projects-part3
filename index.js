@@ -29,23 +29,27 @@ app.get('/api/persons', (request, response) => {
 })
 
 // Retrieve a single person via the api
-app.get('/api/persons/:id', (request, response) => {
+app.get('/api/persons/:id', (request, response, next) => {
     Person
     .findById(request.params.id)
     .then(person => {
-        response.json(person)
+        if (person) {
+            response.json(person)
+        } else {
+            response.status(404).end()
+        }
     })
-    .catch(error => {
-        console.log(`Error retrieving person of id ${request.params.id}`, error.message)
-    })
+    .catch(error => next(error))
 })
 
 // Delete a single person via the api
-app.delete('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
-    persons = persons.filter(person => person.id !== id)
-    
-    response.status(204).end()
+app.delete('/api/persons/:id', (request, response, next) => {
+    Person
+    .findByIdAndDelete(request.params.id)
+    .then(result => {
+        response.status(204).end()
+    })
+    .catch(error => next(error))
 })
 
 // Create a new person to be added to the dataset via the api
@@ -96,6 +100,23 @@ app.get('/info', (request, response) => {
         </p>`
     )
 })
+
+const unknownEndpoint = (request, response) => {
+    response.status(404).send({ error: 'unknown endpoint' })
+}
+
+app.use(unknownEndpoint)
+
+const errorHandler = (error, request, response, next) => {
+    console.log(error.message)
+
+    if (error.name === 'CastError') {
+        return response.status(400).send({ error: 'malformatted id' })
+    }
+    next(error)
+}
+
+app.use(errorHandler)
 
 // PORT
 const PORT = process.env.PORT
