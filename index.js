@@ -57,16 +57,6 @@ app.delete('/api/persons/:id', (request, response, next) => {
 app.post('/api/persons', (request, response, next) => {
     const body = request.body
 
-    if (!body.name) {
-        return response.status(400).json({
-            error: 'name missing'
-        })
-    } else if (!body.number) {
-        return response.status(400).json({
-            error: 'number missing'
-        })
-    }
-
     const person = new Person({
         name: body.name,
         number: body.number,
@@ -89,12 +79,20 @@ app.put('/api/persons/:id', (request, response, next) => {
         number: body.number,
     }
 
+    const options = {new: true, runValidators: true, context:'query'}
+
     Person
-    .findByIdAndUpdate(request.params.id, updatedPerson, { new: true, runValidators: true, context: 'query' })
+    .findByIdAndUpdate(
+        request.params.id, 
+        updatedPerson, 
+        options,
+    )
     .then(person => {
         response.json(person)
     })
-    .catch(error => next(error))
+    .catch(error => {
+        next(error)
+    })
 })
 
 // Get info for the phonebook and the time this info was processed
@@ -124,6 +122,7 @@ const errorHandler = (error, request, response, next) => {
     if (error.name === 'CastError') {
         return response.status(400).send({ error: 'malformatted id' })
     } else if (error.name === 'ValidationError') {
+        console.log(error.message)
         return response.status(400).send(error.message)
     }
     next(error)
